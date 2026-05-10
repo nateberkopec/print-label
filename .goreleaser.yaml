@@ -1,0 +1,42 @@
+version: 2
+
+project_name: print-label
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: print-label
+    main: ./cmd/print-label
+    binary: print-label
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - id: print-label
+    ids:
+      - print-label
+    formats:
+      - tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "arm64" }}arm64
+      {{- else }}{{ .Arch }}{{ end }}
+    files:
+      - README.md
+      - LICENSE*
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  use: github

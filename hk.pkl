@@ -1,0 +1,23 @@
+amends "package://github.com/jdx/hk/releases/download/v1.39.0/hk@1.39.0#/Config.pkl"
+
+hooks {
+  ["pre-commit"] {
+    steps {
+      ["fmt"] {
+        check = "mise run lint:fmt"
+      }
+      ["vet"] {
+        check = "mise run lint:vet"
+      }
+      ["large-files"] {
+        check = "mise run lint:large-files"
+      }
+      ["secrets"] {
+        check = "mise run lint:secrets"
+      }
+      ["test"] {
+        check = "mise run test"
+      }
+    }
+  }
+}

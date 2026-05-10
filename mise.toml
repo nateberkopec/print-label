@@ -1,0 +1,50 @@
+[env]
+_.file = ".env"
+
+[tools]
+go = "latest"
+hk = "latest"
+"github:aldanial/cloc" = "latest"
+gitleaks = "latest"
+goreleaser = "latest"
+
+[deps.hk]
+sources = ["hk.pkl"]
+outputs = [".git/hooks/pre-commit"]
+run = "hk install"
+
+[tasks.test]
+description = "Run the test suite"
+sources = ["**/*.go", "testdata/**/*", "go.mod", "go.sum"]
+run = "go test ./..."
+
+[tasks."lint:fmt"]
+description = "Check Go formatting"
+sources = ["**/*.go"]
+run = "test -z \"$(gofmt -l .)\""
+
+[tasks."lint:vet"]
+description = "Run go vet"
+sources = ["**/*.go", "go.mod", "go.sum"]
+run = "go vet ./..."
+
+[tasks."lint:large-files"]
+description = "Check staged files for large files"
+sources = [".git/index", "tools/check_large_files.rb"]
+run = "ruby tools/check_large_files.rb"
+
+[tasks."lint:secrets"]
+description = "Scan working tree for hardcoded secrets"
+run = "gitleaks dir --redact=75 --no-banner --no-color --max-target-megabytes 5 ."
+
+[tasks.lint]
+description = "Run all lint checks"
+depends = ["lint:fmt", "lint:vet", "lint:large-files", "lint:secrets"]
+
+[tasks.build]
+description = "Build the print-label binary"
+run = "go build -o bin/print-label ./cmd/print-label"
+
+[tasks.release]
+description = "Create a local release snapshot"
+run = "goreleaser release --snapshot --clean"

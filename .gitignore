@@ -1,0 +1,5 @@
+.env
+/bin/print-label
+.DS_Store
+
+dist/

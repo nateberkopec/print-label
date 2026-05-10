@@ -1,0 +1,1 @@
+/Users/nateberkopec/.claude/skills/dev-env-setup/scripts/check_large_files.rb
