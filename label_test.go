@@ -39,7 +39,7 @@ margin: 22
 func TestRenderTextGoldenPNGs(t *testing.T) {
 	for _, text := range []string{"Birdie", "Sky"} {
 		t.Run(text, func(t *testing.T) {
-			img, err := RenderText(text, DefaultConfig())
+			img, err := RenderText(text, testConfig(t))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -53,15 +53,16 @@ func TestRenderTextGoldenPNGs(t *testing.T) {
 }
 
 func TestRasterAndPrintJobGolden(t *testing.T) {
-	img, err := RenderText("Birdie", DefaultConfig())
+	cfg := testConfig(t)
+	img, err := RenderText("Birdie", cfg)
 	if err != nil {
 		t.Fatal(err)
 	}
-	raster, err := ImageToRaster(img, DefaultConfig().TapeWidth)
+	raster, err := ImageToRaster(img, cfg.TapeWidth)
 	if err != nil {
 		t.Fatal(err)
 	}
-	job, err := BuildPrintJob(raster, DefaultConfig().TapeWidth, DefaultConfig().Margin)
+	job, err := BuildPrintJob(raster, cfg.TapeWidth, cfg.Margin)
 	if err != nil {
 		t.Fatal(err)
 	}
