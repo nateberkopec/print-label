@@ -32,6 +32,12 @@ mise run build
 ./bin/print-label Birdie
 ```
 
+Pass multiple labels in one command to avoid paying the printer's leader feed for each label. Each page is fully cut.
+
+```bash
+./bin/print-label openclaw sfactory
+```
+
 The command reads `~/.config/label/config.yaml` for compatibility with the previous script. CLI flags override config values.
 
 ## Release
