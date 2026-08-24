@@ -1,6 +1,8 @@
 package printlabel
 
 import (
+	"bytes"
+	"io"
 	"net"
 	"strconv"
 	"time"
@@ -12,6 +14,6 @@ func SendToPrinter(data []byte, ip string, port int) error {
 		return err
 	}
 	defer conn.Close()
-	_, err = conn.Write(data)
+	_, err = io.Copy(conn, bytes.NewReader(data))
 	return err
 }

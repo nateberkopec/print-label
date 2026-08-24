@@ -91,7 +91,7 @@ func main() {
 	if err := printlabel.SendToPrinter(job, cfg.PrinterIP, cfg.PrinterPort); err != nil {
 		exit(err)
 	}
-	fmt.Println("Print job sent.")
+	fmt.Println("Print data sent; printer completion was not confirmed.")
 }
 
 func previewPath(path string, index, count int) string {

@@ -5,6 +5,24 @@ import (
 	"testing"
 )
 
+func TestUncompressedRasterTransfersEveryRow(t *testing.T) {
+	lines := [][]byte{
+		make([]byte, BytesPerLine),
+		bytes.Repeat([]byte{0xff}, BytesPerLine),
+	}
+	var got bytes.Buffer
+	writeRaster(&got, lines)
+
+	var want bytes.Buffer
+	for _, line := range lines {
+		want.Write([]byte{0x47, BytesPerLine, 0x00})
+		want.Write(line)
+	}
+	if !bytes.Equal(got.Bytes(), want.Bytes()) {
+		t.Fatalf("uncompressed raster stream = %x, want %x", got.Bytes(), want.Bytes())
+	}
+}
+
 func TestPrintJobMarksOnlyPageAsFinal(t *testing.T) {
 	line := bytes.Repeat([]byte{0xff}, BytesPerLine)
 	job, err := BuildPrintJob([][]byte{line}, 6, 14)

@@ -38,7 +38,9 @@ Pass multiple labels in one command to avoid paying the printer's leader feed fo
 ./bin/print-label openclaw sfactory
 ```
 
-The command reads `~/.config/label/config.yaml` for compatibility with the previous script. CLI flags override config values.
+The command reads `~/.config/label/config.yaml` relative to the process's `HOME` for compatibility with the previous script. CLI flags override config values.
+
+Raw TCP confirms only that the print data was written to the printer connection. It does not provide reliable print-completion status, so verify the printer's status LED if a label does not appear.
 
 ## Release
 

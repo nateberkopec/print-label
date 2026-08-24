@@ -32,13 +32,8 @@ func rasterLine(img *image.Gray, x int, info TapeInfo) []byte {
 }
 
 func writeRaster(buf *bytes.Buffer, rasterLines [][]byte) {
-	blank := bytes.Repeat([]byte{0}, BytesPerLine)
 	for _, line := range rasterLines {
-		if bytes.Equal(line, blank) {
-			buf.WriteByte(0x5a)
-			continue
-		}
-		buf.WriteByte(0x47)
+		buf.WriteByte(0x47) // Uppercase G per PT-P900W Raster Command Reference v1.02.
 		_ = binary.Write(buf, binary.LittleEndian, uint16(BytesPerLine))
 		buf.Write(line)
 	}
