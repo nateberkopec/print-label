@@ -10,6 +10,8 @@ builds:
   - id: print-label
     main: ./cmd/print-label
     binary: print-label
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
     env:
       - CGO_ENABLED=0
     goos:

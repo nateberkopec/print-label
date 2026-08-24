@@ -40,6 +40,8 @@ Pass multiple labels in one command to avoid paying the printer's leader feed fo
 
 The command reads `~/.config/label/config.yaml` relative to the process's `HOME` for compatibility with the previous script. CLI flags override config values.
 
+`print-label --usage` outputs a [Usage](https://usage.jdx.dev/) KDL specification for shell completions and other tooling. `--usage-spec` is an alias.
+
 Raw TCP confirms only that the print data was written to the printer connection. It does not provide reliable print-completion status, so verify the printer's status LED if a label does not appear.
 
 ## Release
@@ -47,8 +49,8 @@ Raw TCP confirms only that the print data was written to the printer connection.
 Push a version tag to build and publish GitHub release binaries:
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.2.0
+git push origin v0.2.0
 ```
 
 The release workflow uses GoReleaser and attaches tarballs named for mise/ubi-style GitHub release installs.

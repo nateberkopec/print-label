@@ -12,6 +12,11 @@ import (
 )
 
 func main() {
+	if output, ok := metadataOutput(os.Args[1:]); ok {
+		fmt.Print(output)
+		return
+	}
+
 	cfg, err := printlabel.LoadConfig(printlabel.ConfigPath)
 	if err != nil {
 		exit(err)
