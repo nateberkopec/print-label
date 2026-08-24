@@ -5,6 +5,7 @@ import "fmt"
 const StatusFrameSize = 32
 
 const (
+	statusRequestReply      = 0x00
 	statusPrintingCompleted = 0x01
 	statusErrorOccurred     = 0x02
 )

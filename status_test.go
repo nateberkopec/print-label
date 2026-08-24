@@ -17,6 +17,7 @@ func TestStatusErrors(t *testing.T) {
 		{"wrong media", 9, 0x01, "wrong media"},
 		{"communication error", 9, 0x04, "communication error"},
 		{"cover open", 9, 0x10, "cover open"},
+		{"unknown extended error", 7, 0xff, "unknown extended error 0xff"},
 	}
 
 	for _, tt := range tests {

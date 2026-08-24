@@ -42,15 +42,15 @@ The command reads `~/.config/label/config.yaml` relative to the process's `HOME`
 
 `print-label --usage` outputs a [Usage](https://usage.jdx.dev/) KDL specification for shell completions and other tooling. `--usage-spec` is an alias.
 
-Raw TCP confirms only that the print data was written to the printer connection. It does not provide reliable print-completion status, so verify the printer's status LED if a label does not appear.
+Before sending print data, the command checks the printer status and refuses to print if the loaded tape width differs from the requested width. Raw TCP does not provide reliable print-completion status, so verify the printer's status LED if a label does not appear.
 
 ## Release
 
 Push a version tag to build and publish GitHub release binaries:
 
 ```bash
-git tag v0.2.0
-git push origin v0.2.0
+git tag v0.3.0
+git push origin v0.3.0
 ```
 
 The release workflow uses GoReleaser and attaches tarballs named for mise/ubi-style GitHub release installs.

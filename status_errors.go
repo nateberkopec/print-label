@@ -51,10 +51,18 @@ func appendFlags(messages []string, value byte, flags []flagMessage) []string {
 }
 
 func extendedErrorMessage(value byte) string {
-	return map[byte]string{
-		0x10: "FLe tape end",
-		0x1d: "high-resolution or draft printing error",
-		0x1e: "adapter connection error",
-		0x21: "incompatible media",
-	}[value]
+	switch value {
+	case 0:
+		return ""
+	case 0x10:
+		return "FLe tape end"
+	case 0x1d:
+		return "high-resolution or draft printing error"
+	case 0x1e:
+		return "adapter connection error"
+	case 0x21:
+		return "incompatible media"
+	default:
+		return fmt.Sprintf("unknown extended error 0x%02x", value)
+	}
 }

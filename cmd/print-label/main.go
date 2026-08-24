@@ -93,7 +93,7 @@ func main() {
 		exit(err)
 	}
 	fmt.Printf("Sending %d labels, %d raster lines (%d bytes)...\n", len(pages), totalLines, len(job))
-	if err := printlabel.SendToPrinter(job, cfg.PrinterIP, cfg.PrinterPort); err != nil {
+	if err := printlabel.SendToPrinter(job, cfg.TapeWidth, cfg.PrinterIP, cfg.PrinterPort); err != nil {
 		exit(err)
 	}
 	fmt.Println("Print data sent; printer completion was not confirmed.")
