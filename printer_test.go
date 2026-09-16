@@ -4,100 +4,47 @@ import (
 	"bytes"
 	"io"
 	"net"
-	"strings"
 	"testing"
+	"time"
 )
 
-func TestSendToPrinterChecksTapeBeforeSendingJob(t *testing.T) {
-	printer, results := startTestPrinter(t, validStatusFrame(statusRequestReply))
-	job := []byte("print job")
-
-	if err := SendToPrinter(job, 6, printer.IP.String(), printer.Port); err != nil {
-		t.Fatal(err)
-	}
-	result := <-results
-	if result.err != nil {
-		t.Fatal(result.err)
-	}
-	if !bytes.Equal(result.request, []byte{0x1b, 0x69, 0x53}) {
-		t.Errorf("status request = %x, want 1b6953", result.request)
-	}
-	if !bytes.Equal(result.job, job) {
-		t.Errorf("print job = %q, want %q", result.job, job)
-	}
-}
-
-func TestSendToPrinterRejectsInvalidStatusBeforeSendingJob(t *testing.T) {
-	tests := []struct {
-		name  string
-		frame []byte
-		width float64
-		want  string
-	}{
-		{"wrong tape", validStatusFrame(statusRequestReply), 12, "printer reports 6 mm"},
-		{"printer error", statusFrameWithError(), 6, "cover open"},
-		{"unexpected status", validStatusFrame(statusPrintingCompleted), 6, "unexpected printer status type"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			printer, results := startTestPrinter(t, tt.frame)
-			err := SendToPrinter([]byte("must not be sent"), tt.width, printer.IP.String(), printer.Port)
-			if err == nil || !strings.Contains(err.Error(), tt.want) {
-				t.Fatalf("SendToPrinter error = %v, want %q", err, tt.want)
-			}
-			result := <-results
-			if result.err != nil {
-				t.Fatal(result.err)
-			}
-			if len(result.job) != 0 {
-				t.Errorf("sent print job despite invalid status: %q", result.job)
-			}
-		})
-	}
-}
-
-func statusFrameWithError() []byte {
-	frame := validStatusFrame(statusErrorOccurred)
-	frame[9] = 0x10
-	return frame
-}
-
-type printerResult struct {
-	request []byte
-	job     []byte
-	err     error
-}
-
-func startTestPrinter(t *testing.T, status []byte) (*net.TCPAddr, <-chan printerResult) {
-	t.Helper()
+func TestSendToPrinterWithoutStatusReply(t *testing.T) {
 	listener, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP("127.0.0.1")})
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer listener.Close()
 
-	results := make(chan printerResult, 1)
+	type result struct {
+		data []byte
+		err  error
+	}
+	results := make(chan result, 1)
 	go func() {
-		defer listener.Close()
 		conn, err := listener.Accept()
 		if err != nil {
-			results <- printerResult{err: err}
+			results <- result{err: err}
 			return
 		}
 		defer conn.Close()
-
-		request := make([]byte, 3)
-		if _, err := io.ReadFull(conn, request); err != nil {
-			results <- printerResult{err: err}
+		if err := conn.SetReadDeadline(time.Now().Add(time.Second)); err != nil {
+			results <- result{err: err}
 			return
 		}
-		if _, err := conn.Write(status); err != nil {
-			results <- printerResult{request: request, err: err}
-			return
-		}
-		job, err := io.ReadAll(conn)
-		results <- printerResult{request: request, job: job, err: err}
+		data, err := io.ReadAll(conn)
+		results <- result{data, err}
 	}()
 
-	return listener.Addr().(*net.TCPAddr), results
+	job := bytes.Repeat([]byte{0x67, 0x46, 0x00}, 11000)
+	addr := listener.Addr().(*net.TCPAddr)
+	if err := SendToPrinter(job, addr.IP.String(), addr.Port); err != nil {
+		t.Fatal(err)
+	}
+	received := <-results
+	if received.err != nil {
+		t.Fatal(received.err)
+	}
+	if !bytes.Equal(received.data, job) {
+		t.Fatalf("received %d bytes, want the exact %d-byte print job", len(received.data), len(job))
+	}
 }
