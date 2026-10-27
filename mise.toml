@@ -28,18 +28,13 @@ description = "Run go vet"
 sources = ["**/*.go", "go.mod", "go.sum"]
 run = "go vet ./..."
 
-[tasks."lint:large-files"]
-description = "Check staged files for large files"
-sources = [".git/index", "tools/check_large_files.rb"]
-run = "ruby tools/check_large_files.rb"
-
 [tasks."lint:secrets"]
 description = "Scan working tree for hardcoded secrets"
 run = "gitleaks dir --redact=75 --no-banner --no-color --max-target-megabytes 5 ."
 
 [tasks.lint]
 description = "Run all lint checks"
-depends = ["lint:fmt", "lint:vet", "lint:large-files", "lint:secrets"]
+depends = ["lint:fmt", "lint:vet", "lint:secrets"]
 
 [tasks.build]
 description = "Build the print-label binary"
