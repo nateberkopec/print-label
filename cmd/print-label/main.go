@@ -31,9 +31,10 @@ func main() {
 	fontSize := flag.String("font-size", cfg.FontSize, "font size in points, or auto")
 	margin := flag.Int("margin", cfg.Margin, "left/right margin in pixels")
 	out := flag.String("out", "label_preview.png", "preview path for --dry-run")
+	listen := flag.String("listen", "", "serve HTTP print requests on this address instead of printing")
 	flag.Parse()
 
-	if flag.NArg() == 0 {
+	if *listen == "" && flag.NArg() == 0 {
 		fmt.Fprintln(os.Stderr, "usage: print-label [options] text [text ...]")
 		flag.PrintDefaults()
 		os.Exit(2)
@@ -46,6 +47,10 @@ func main() {
 	cfg.FontIndex = *fontIndex
 	cfg.FontSize = *fontSize
 	cfg.Margin = *margin
+
+	if *listen != "" {
+		exit(serve(*listen, cfg))
+	}
 
 	info, ok := printlabel.TapeInfos[cfg.TapeWidth]
 	if !ok {
@@ -73,26 +78,11 @@ func main() {
 		return
 	}
 
-	pages := make([][][]byte, len(images))
-	totalLines := 0
-	for i, img := range images {
-		pages[i], err = printlabel.ImageToRaster(img, cfg.TapeWidth)
-		if err != nil {
-			exit(err)
-		}
-		totalLines += len(pages[i])
-	}
-
-	var job []byte
-	if len(pages) == 1 {
-		job, err = printlabel.BuildPrintJob(pages[0], cfg.TapeWidth, cfg.Margin)
-	} else {
-		job, err = printlabel.BuildMultiPrintJob(pages, cfg.TapeWidth, cfg.Margin)
-	}
+	job, err := printlabel.BuildLabelJob(images, cfg)
 	if err != nil {
 		exit(err)
 	}
-	fmt.Printf("Sending %d labels, %d raster lines (%d bytes)...\n", len(pages), totalLines, len(job))
+	fmt.Printf("Sending %d labels (%d bytes)...\n", len(images), len(job))
 	if err := printlabel.SendToPrinter(job, cfg.PrinterIP, cfg.PrinterPort); err != nil {
 		exit(err)
 	}

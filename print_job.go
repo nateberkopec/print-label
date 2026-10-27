@@ -4,7 +4,23 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"image"
 )
+
+func BuildLabelJob(images []*image.Gray, cfg Config) ([]byte, error) {
+	pages := make([][][]byte, len(images))
+	for i, img := range images {
+		var err error
+		pages[i], err = ImageToRaster(img, cfg.TapeWidth)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if len(pages) == 1 {
+		return BuildPrintJob(pages[0], cfg.TapeWidth, cfg.Margin)
+	}
+	return BuildMultiPrintJob(pages, cfg.TapeWidth, cfg.Margin)
+}
 
 func BuildPrintJob(rasterLines [][]byte, tapeWidth float64, marginDots int) ([]byte, error) {
 	info, ok := TapeInfos[tapeWidth]
