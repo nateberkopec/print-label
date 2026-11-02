@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,6 +17,7 @@ import (
 
 type printRequest struct {
 	Labels    []string `json:"labels"`
+	Images    []string `json:"images"`
 	TapeWidth float64  `json:"tape_width"`
 }
 
@@ -41,7 +44,7 @@ func serve(addr string, cfg printlabel.Config) error {
 
 func (s *printServer) handlePrint(w http.ResponseWriter, r *http.Request) {
 	var req printRequest
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<16)).Decode(&req); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 8<<20)).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
@@ -49,18 +52,15 @@ func (s *printServer) handlePrint(w http.ResponseWriter, r *http.Request) {
 	if req.TapeWidth != 0 {
 		cfg.TapeWidth = req.TapeWidth
 	}
-	if err := validate(req.Labels, cfg); err != nil {
+	if err := validate(req, cfg); err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
 
-	images := make([]*image.Gray, len(req.Labels))
-	for i, text := range req.Labels {
-		var err error
-		if images[i], err = printlabel.RenderText(text, cfg); err != nil {
-			writeError(w, http.StatusInternalServerError, err)
-			return
-		}
+	images, status, err := buildImages(req, cfg)
+	if err != nil {
+		writeError(w, status, err)
+		return
 	}
 	job, err := printlabel.BuildLabelJob(images, cfg)
 	if err != nil {
@@ -79,19 +79,46 @@ func (s *printServer) handlePrint(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, printResponse{Labels: len(images), Bytes: len(job)})
 }
 
-func validate(labels []string, cfg printlabel.Config) error {
+func validate(req printRequest, cfg printlabel.Config) error {
 	if _, ok := printlabel.TapeInfos[cfg.TapeWidth]; !ok {
 		return fmt.Errorf("unsupported tape width: %gmm", cfg.TapeWidth)
 	}
-	if len(labels) == 0 {
-		return errors.New("at least one label is required")
+	if len(req.Labels) > 0 && len(req.Images) > 0 {
+		return errors.New("send either labels or images, not both")
 	}
-	for _, text := range labels {
+	if len(req.Labels) == 0 && len(req.Images) == 0 {
+		return errors.New("at least one label or image is required")
+	}
+	for _, text := range req.Labels {
 		if strings.TrimSpace(text) == "" {
 			return errors.New("labels must not be blank")
 		}
 	}
 	return nil
+}
+
+func buildImages(req printRequest, cfg printlabel.Config) ([]*image.Gray, int, error) {
+	if len(req.Images) > 0 {
+		images := make([]*image.Gray, len(req.Images))
+		for i, encoded := range req.Images {
+			data, err := base64.StdEncoding.DecodeString(encoded)
+			if err != nil {
+				return nil, http.StatusBadRequest, fmt.Errorf("image %d: %w", i+1, err)
+			}
+			if images[i], err = printlabel.LoadImage(bytes.NewReader(data), cfg.TapeWidth); err != nil {
+				return nil, http.StatusBadRequest, fmt.Errorf("image %d: %w", i+1, err)
+			}
+		}
+		return images, 0, nil
+	}
+	images := make([]*image.Gray, len(req.Labels))
+	for i, text := range req.Labels {
+		var err error
+		if images[i], err = printlabel.RenderText(text, cfg); err != nil {
+			return nil, http.StatusInternalServerError, err
+		}
+	}
+	return images, 0, nil
 }
 
 func writeError(w http.ResponseWriter, status int, err error) {

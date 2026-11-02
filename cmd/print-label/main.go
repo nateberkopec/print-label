@@ -32,10 +32,12 @@ func main() {
 	margin := flag.Int("margin", cfg.Margin, "left/right margin in pixels")
 	out := flag.String("out", "label_preview.png", "preview path for --dry-run")
 	listen := flag.String("listen", "", "serve HTTP print requests on this address instead of printing")
+	imageMode := flag.Bool("image", false, "treat arguments as paths to PNG images instead of text")
 	flag.Parse()
 
 	if *listen == "" && flag.NArg() == 0 {
 		fmt.Fprintln(os.Stderr, "usage: print-label [options] text [text ...]")
+		fmt.Fprintln(os.Stderr, "       print-label [options] --image image.png [image.png ...]")
 		flag.PrintDefaults()
 		os.Exit(2)
 	}
@@ -59,8 +61,12 @@ func main() {
 
 	fmt.Printf("Tape: %gmm (%dpx height), margin: %dpx\n", cfg.TapeWidth, info.PrintablePixels, cfg.Margin)
 	images := make([]*image.Gray, flag.NArg())
-	for i, text := range flag.Args() {
-		images[i], err = printlabel.RenderText(text, cfg)
+	for i, arg := range flag.Args() {
+		if *imageMode {
+			images[i], err = loadImageFile(arg, cfg.TapeWidth)
+		} else {
+			images[i], err = printlabel.RenderText(arg, cfg)
+		}
 		if err != nil {
 			exit(err)
 		}
@@ -87,6 +93,19 @@ func main() {
 		exit(err)
 	}
 	fmt.Println("Print data sent; printer completion was not confirmed.")
+}
+
+func loadImageFile(path string, tapeWidth float64) (*image.Gray, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	img, err := printlabel.LoadImage(f, tapeWidth)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", path, err)
+	}
+	return img, nil
 }
 
 func previewPath(path string, index, count int) string {

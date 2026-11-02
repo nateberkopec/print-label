@@ -37,9 +37,10 @@ flag "--font-size <size>" help="Font size in points, or auto"
 flag "--margin <pixels>" help="Left/right margin in pixels"
 flag "--out <path>" help="Preview path for --dry-run"
 flag "--listen <addr>" help="Serve HTTP print requests on this address instead of printing"
+flag "--image" help="Treat arguments as paths to PNG images instead of text"
 flag "-h --help" help="Print help"
 flag "--version" help="Print version"
 flag "--usage --usage-spec" help="Print the CLI's usage specification"
-arg "<text>..." help="Text for each label"
+arg "<text>..." help="Text for each label, or PNG paths with --image"
 `, version)
 }
