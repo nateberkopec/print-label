@@ -83,7 +83,7 @@ func validate(req printRequest, cfg printlabel.Config) error {
 	if _, ok := printlabel.TapeInfos[cfg.TapeWidth]; !ok {
 		return fmt.Errorf("unsupported tape width: %gmm", cfg.TapeWidth)
 	}
-	if len(req.Labels) > 0 && len(req.Images) > 0 {
+	if req.Labels != nil && req.Images != nil {
 		return errors.New("send either labels or images, not both")
 	}
 	if len(req.Labels) == 0 && len(req.Images) == 0 {
